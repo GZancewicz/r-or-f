@@ -1,0 +1,95 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.6in]{geometry}
+\usepackage{booktabs}\usepackage{array}\usepackage{enumitem}\usepackage{pdflscape}
+\setlist{nosep,leftmargin=1.4em}
+\renewcommand{\arraystretch}{1.25}
+\pagestyle{empty}
+\newcolumntype{R}{>{\bfseries}c}
+\begin{document}
+\begin{center}
+{\LARGE\bfseries Open-Shove Chart}\\[2pt]
+{\large 4-handed \;$\cdot$\; 8\,bb \;$\cdot$\; SB 0.4 / BB 1.0 \;$\cdot$\; all-in or fold \;$\cdot$\; Nash}
+\end{center}
+\noindent\textbf{Use this ONLY when it is folded to you.}\\[-2pt]
+\begin{center}\begin{tabular}{R c c c c}
+\toprule
+\textbf{Row} & \textbf{BB} (walk) & \textbf{SB+} (60\%) & \textbf{BTN+} (39\%) & \textbf{CO+} (32\%)\\
+\midrule
+Pairs & -- & 22+ & 22+ & 22+\\
+\midrule
+AXs & -- & A2s+ & A2s+ & A2s+\\
+KXs & -- & K2s+ & K3s+ & K4s+\\
+QXs & -- & Q2s+ & Q5s+ & Q6s+\\
+JXs & -- & J2s+ & J7s+ & J7s+\\
+TXs & -- & T4s+ & T6s+ & T7s+\\
+9Xs & -- & 95s+ & 96s+ & 96s+\\
+8Xs & -- & 84s+ & 85s+ & 86s+\\
+7Xs & -- & 74s+ & 75s+ & 75s+\\
+6Xs & -- & 63s+ & 64s+ & 65s\\
+5Xs & -- & 53s+ & 54s & 54s\\
+\midrule
+AXo & -- & A2o+ & A2o+ & A7o+\\
+KXo & -- & K2o+ & KTo+ & KTo+\\
+QXo & -- & Q6o+ & QTo+ & QTo+\\
+JXo & -- & J8o+ & J9o+ & JTo\\
+TXo & -- & T8o+ & T9o & T9o\\
+9Xo & -- & 97o+ & 98o & --\\
+8Xo & -- & 87o & -- & --\\
+7Xo & -- & 76o & -- & --\\
+\bottomrule
+\end{tabular}\end{center}
+\noindent\textbf{How to read:} each column is that seat's full open-shove threshold
+(``Q4s+'' = all suited queens down to Q4s); ``--'' = no hands of that type. The \textbf{BB}
+column is all dashes because the BB never open-shoves --- if it folds to the BB it's a walk
+(you already win). Ranges nest CO $\subseteq$ BTN $\subseteq$ SB.
+\par\vspace{4pt}
+\noindent\textbf{If anyone has already shoved, DO NOT use this page} --- use the Calling chart.
+Calling your open range vs a shove costs $\approx$20\,bb/100.
+\par\vspace{6pt}
+\noindent\textbf{\large Notes}\par\nobreak\vspace{2pt}
+\begin{itemize}
+\item \textbf{The SB+ column is mostly blind defense} ($\approx$0.3\,bb/100, almost all of it recovering the 0.4 you'd forfeit by folding). The valuable part is \textbf{the offsuit kings (K2o+)}; the low suited tail (84s, 74s, 63s, 53s\dots) is a rounding error -- skip it if simplifying.
+\item \textbf{Break-even hands wobble:} single-hand cells sit near 0\,EV and can flip with tiny changes -- don't sweat the exact edge.
+\item \textbf{Button range is a safe SB default:} every BTN hand is also a +EV SB shove, so ``BTN range in the SB'' never misfires -- it just leaves $\approx$0.3\,bb/100 of the fringe behind.
+\item \textbf{Constant 8\,bb stacks} (auto buy-in / winnings withdrawn) $\Rightarrow$ chip-EV $=$ money-EV, no ICM.
+\end{itemize}
+\begin{landscape}
+\begin{center}
+{\LARGE\bfseries Calling Chart --- all seats}\\[2pt]
+{\large facing an all-in shove \;$\cdot$\; 4-handed \;$\cdot$\; 8\,bb \;$\cdot$\; Nash}
+\end{center}
+\noindent\textbf{Use this ONLY when someone has already moved all-in} in front of you.
+Top groups are \emph{your} seat; sub-columns are the shover's seat (tightest shover first).
+Within a group ``--'' = same as the column to its left --- you call \emph{wider} vs a looser
+shover. (CO acts first, so it never faces a shove.)
+\par\vspace{6pt}
+\begin{center}\large \begin{tabular}{R|ccc|cc|c|c}
+\toprule
+\textbf{Row} & \multicolumn{3}{c|}{\textbf{BB}} & \multicolumn{2}{c|}{\textbf{SB}} & \multicolumn{1}{c|}{\textbf{BTN}} & \multicolumn{1}{c}{\textbf{CO}}\\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-7}\cmidrule(lr){8-8}
+ & {\footnotesize vs CO (16\%)} & {\footnotesize vs BTN (23\%)} & {\footnotesize vs SB (41\%)} & {\footnotesize vs CO (12\%)} & {\footnotesize vs BTN (17\%)} & {\footnotesize vs CO (10\%)} & {\footnotesize n/a}\\
+\midrule
+Pairs & 44+ & 22+ & -- & 55+ & 44+ & 66+ & --\\
+\midrule
+AXs & A5s+ & A2s+ & -- & A8s+ & A5s+ & A9s+ & --\\
+KXs & KTs+ & K9s+ & K2s+ & KJs+ & KTs+ & KQs & --\\
+QXs & QJs & QTs+ & Q5s+ & -- & QJs & -- & --\\
+JXs & -- & JTs & J7s+ & -- & -- & -- & --\\
+TXs & -- & -- & T8s+ & -- & -- & -- & --\\
+\midrule
+AXo & A8o+ & A5o+ & A2o+ & A9o+ & A7o+ & ATo+ & --\\
+KXo & KJo+ & KTo+ & K4o+ & KQo & KJo+ & -- & --\\
+QXo & -- & QJo & Q8o+ & -- & -- & -- & --\\
+JXo & -- & -- & J9o+ & -- & -- & -- & --\\
+\bottomrule
+\end{tabular}\end{center}
+\par\vspace{8pt}
+\noindent\fbox{\parbox{0.96\linewidth}{%
+\textbf{Facing 2+ all-ins (over-call):} the table is for \emph{one} shover. If someone has
+already \emph{called} the all-in ahead of you, call only premiums --- about
+\textbf{66+, ATs+, KTs+, AK, AQ} ($\approx$half as wide). You must beat \emph{two} strong
+ranges, and a cold-caller is never bluffing. Tighten more if an early/tight seat called; stay
+a touch wider if both players in were late (BTN/SB). With all three all-in, tighten again to
+$\approx$TT+ / AQ+ / AK. (Only the SB and BB can ever face this; the BTN faces at most one.)}}
+\end{landscape}
+\end{document}

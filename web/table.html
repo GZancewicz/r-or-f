@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Push/Fold GTO Advisor — 4-Handed</title>
+  <link rel="stylesheet" href="table.css" />
+</head>
+<body>
+  <header>
+    <h1>Push / Fold GTO Advisor</h1>
+    <p class="sub">4-handed · all-in or fold · 8&nbsp;bb effective · Nash equilibrium</p>
+  </header>
+
+  <main>
+    <!-- ============ 52-CARD BOARD (left, by suit) ============ -->
+    <aside class="deck">
+      <div class="deck-head">
+        <label>Click your<br>two cards</label>
+        <span class="deck-count" id="deckCount">0 / 2</span>
+        <button class="reset" id="clearCards">✕</button>
+      </div>
+      <div class="card-board" id="cardBoard"></div>
+    </aside>
+
+    <div class="main-col">
+    <!-- ============ PLAYERS COUNT ============ -->
+    <section class="players-bar">
+      <label>Players</label>
+      <div class="seg" id="playerSeg"></div>
+    </section>
+
+    <!-- ============ THE TABLE ============ -->
+    <section class="table-wrap">
+      <div class="poker-table">
+        <div class="table-rail"></div>
+        <div class="felt"></div>
+        <div class="felt-label" id="feltLabel">Folded to you</div>
+
+        <!-- villain seats injected by JS -->
+        <div id="villains"></div>
+
+        <!-- hero seat -->
+        <div class="seat seat-hero" id="seat-hero"></div>
+
+        <!-- move my position clockwise -->
+        <button class="rotate-btn" id="rotateBtn" title="move my position clockwise">⟳</button>
+      </div>
+    </section>
+
+    <!-- ============ THE VERDICT (directly under your seat) ============ -->
+    <section class="verdict" id="verdict">
+      <div class="verdict-action" id="verdictAction">—</div>
+      <div class="verdict-detail" id="verdictDetail">Pick your two cards.</div>
+      <div class="ev-row" id="evRow"></div>
+      <button class="reset" id="resetBtn">↺ Folded to me</button>
+    </section>
+    </div><!-- /main-col -->
+  </main>
+
+  <script src="table.js"></script>
+</body>
+</html>

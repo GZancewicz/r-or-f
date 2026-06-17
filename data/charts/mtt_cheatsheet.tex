@@ -1,0 +1,69 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.55in]{geometry}
+\usepackage{booktabs}\usepackage{array}\usepackage{enumitem}\usepackage{xcolor}
+\setlist{nosep,leftmargin=1.4em}
+\renewcommand{\arraystretch}{1.25}
+\pagestyle{empty}
+\newcolumntype{P}{>{\bfseries}l}
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Tournament NLH Cheat Sheet}\\[2pt]
+{\large No-Limit Hold'em \;$\cdot$\; 6--9 handed \;$\cdot$\; raise-or-fold, shove when short}
+\end{center}
+\vspace{2pt}
+
+\noindent{\large\bfseries 0. Read the format before you sit} \quad\small(this decides everything below)
+\begin{itemize}[leftmargin=1.6em]
+\item \textbf{Speed.} Blind levels $\le$5 min = \textbf{hyper-turbo}: you go from deep to short in minutes, so \emph{push/fold is your main mode, not the exception}. Be registered from the start for max big blinds.
+\item \textbf{Payout = your real goal.} Check the prize tab:
+\begin{itemize}[leftmargin=1.3em,label=$\circ$]
+\item \textbf{Flat / satellite} (1st $\approx$ min-cash; often only a few \% paid): the \emph{only} goal is to reach the money. \textbf{Far from the bubble $\Rightarrow$ accumulate} --- a short stack has $\approx$0 equity for the top few \%, and in a freeroll busting is free, so take good aggressive +EV spots to build. \textbf{At the bubble $\Rightarrow$ pure survival:} fold everything marginal, let short stacks bust each other, and with a big stack jam into mid stacks that can't call. \textbf{Once you cash, your prize is locked $\Rightarrow$ shove every hand.}
+\item \textbf{Top-heavy} (1st $\gg$ min-cash): chips have real value --- play to go deep and win, while still respecting the bubble.
+\end{itemize}
+\end{itemize}
+
+\vspace{5pt}
+\noindent{\large\bfseries Core rules}
+\begin{enumerate}[leftmargin=1.6em]
+\item \textbf{Raise or fold.} Open to \textbf{2--2.5 bb}; never limp, don't cold-call raises out of position. Not good enough to raise $\Rightarrow$ fold.
+\item \textbf{Tighter early, wider late.} Your seat decides how many hands you play --- a handful up front, a ton on the button. \textbf{Antes in play $\Rightarrow$ steal/jam a touch wider} (more dead money to win).
+\item \textbf{Your stack picks the mode.} \;\textbf{$>$20 bb} = normal raise/fold. \;\textbf{10--20 bb} = raise small but be ready to jam from late. \;\textbf{$<$10 bb} = shove or fold.
+\item \textbf{Don't punt --- scale it to the payout.} You never \emph{need} to flip; accumulate in good spots. The \textbf{flatter the payout and closer the bubble}, the tighter you fold marginal spots and the harder you let short stacks bust each other.
+\end{enumerate}
+
+\vspace{6pt}
+\noindent{\large\bfseries Opening ranges} \quad\small(raise $\approx$2.2 bb when folded to you; otherwise fold)
+\vspace{2pt}
+
+\begin{center}
+\begin{tabular}{P p{0.66\textwidth} r}
+\toprule
+\textbf{Position} & \textbf{Open with} & \%\\
+\midrule
+Early (UTG/UTG+1) & 77+,\; AQ+,\; AJs+,\; KQs & 8\\
+Middle (MP/HJ) & \emph{above} + 55+,\; ATs+,\; KJs+,\; QJs,\; JTs,\; AJo,\; KQo & 13\\
+Cutoff & \emph{above} + 22+,\; any suited ace (A2s+),\; suited connectors 54s+,\; KTo,\; QJo & 25\\
+Button & any pair,\; any suited ace,\; any two Broadway,\; suited connectors/gappers,\; A2o+,\; K9o+,\; Q9o+ & 45\\
+Small blind (folded to you) & $\approx$40\% --- raise, or \textbf{shove} if you're $\le$15 bb & 40\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{6pt}
+\noindent{\large\bfseries When to shove (open all-in) instead of raise}
+\begin{itemize}[leftmargin=1.6em]
+\item \textbf{$>$20 bb:} never open-shove --- raise small.
+\item \textbf{15--20 bb:} raise small mostly; open-shoving is fine from \textbf{CO / BTN / SB}; \textbf{3-bet shove} premiums over a raise.
+\item \textbf{10--15 bb:} \textbf{open-shove is your main move} when folded to you --- tight from early, wide from late.
+\item \textbf{$<$10 bb:} \textbf{shove or fold, period.} Jam any decent hand, very wide from late position; don't blind yourself to death.
+\item \textbf{3-bet shove (12--22 bb):} someone raises and you hold \textbf{QQ+ / AK} (add JJ/AQ vs a late-position raiser) $\Rightarrow$ jam all-in over them.
+\end{itemize}
+
+\vspace{8pt}
+\noindent\fbox{\parbox{0.97\linewidth}{\centering
+\textbf{In one line:} \;\textbf{Read the payout first} --- flat/satellite $\rightarrow$ survive to the money, then jam everything; top-heavy $\rightarrow$ play to win. \;Then by stack: deep ($>$20 bb) $\rightarrow$ raise-or-fold by position; \;short ($<$15 bb) $\rightarrow$ open-jam late; \;desperate ($<$10 bb) $\rightarrow$ shove or fold.}}
+
+\vspace{6pt}
+\noindent\footnotesize\textit{This replaces the all-in/fold sheets, which were for a different game. Facing a raise: fold most hands; continue (or 3-bet/jam) only with strong holdings --- being the aggressor beats calling off.}
+\end{document}

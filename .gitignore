@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.streamlit/
+# cached solver output is intentionally tracked (ships with the repo):
+# data/hu_equity_*.npy
+# data/results/*

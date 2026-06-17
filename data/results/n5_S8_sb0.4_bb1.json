@@ -1,0 +1,13 @@
+{
+  "n_players": 5,
+  "stack": 8.0,
+  "sb": 0.4,
+  "bb": 1.0,
+  "positions": [
+    "HJ",
+    "CO",
+    "BTN",
+    "SB",
+    "BB"
+  ]
+}

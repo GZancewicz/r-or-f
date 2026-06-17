@@ -1,0 +1,10 @@
+{
+  "n_players": 2,
+  "stack": 8.0,
+  "sb": 0.4,
+  "bb": 1.0,
+  "positions": [
+    "SB",
+    "BB"
+  ]
+}
