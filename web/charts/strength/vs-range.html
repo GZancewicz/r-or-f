@@ -15,9 +15,23 @@
     h1 { margin: 0 0 2px; font-size: 20px; letter-spacing: .5px; }
     .sub { margin: 0 0 16px; color: var(--muted); font-size: 13px; text-align: center; }
 
+    .chartnav { display: flex; gap: 8px; margin-bottom: 14px; }
+    .chartnav a {
+      text-decoration: none; font-size: 13px; font-weight: 700; color: #444;
+      background: #f2f2f2; border: 1px solid #ccc; border-radius: 20px; padding: 7px 16px;
+    }
+    .chartnav a.active { background: #333; color: #fff; border-color: #333; }
+    .chartnav a:hover { border-color: #888; }
+
     .ctl { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; font-size: 14px; margin-bottom: 6px; }
     .ctl .thr { color: #000; font-weight: 800; font-size: 16px; min-width: 48px; text-align: right; }
-    .ctl input[type=range] { width: min(62vw, 340px); accent-color: #444; }
+    .seg { display: inline-flex; gap: 6px; }
+    .seg button {
+      background: #f2f2f2; border: 1px solid #ccc; border-radius: 8px;
+      padding: 6px 13px; font-weight: 700; font-size: 14px; cursor: pointer; color: #333;
+    }
+    .seg button.active { background: #333; color: #fff; border-color: #333; }
+    .seg button:hover { border-color: #888; }
     .opp-range { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 16px;
                  max-width: min(96vw, 700px); }
     .opp-range code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #333; }
@@ -30,6 +44,7 @@
     .cell .lab { font-weight: 800; font-size: clamp(8px, 1.5vw, 12px); }
     .cell .pct { font-weight: 700; font-size: clamp(7px, 1.3vw, 11px); margin-top: 1px; }
     .cell .odds { font-weight: 600; font-size: clamp(6px, 1vw, 9px); opacity: .8; }
+    .cell.in { box-shadow: inset 0 0 0 2px #000; }   /* hand is in the opponent's range */
 
     .legend { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
     .bar { width: min(80vw, 360px); height: 14px; border-radius: 7px; border: 1px solid var(--border); }
@@ -37,19 +52,22 @@
   </style>
 </head>
 <body>
+  <nav class="chartnav">
+    <a href="index.html">Hand strength</a>
+    <a href="vs-range.html" class="active">Equity vs range</a>
+  </nav>
   <h1>Equity vs Opponent's Range</h1>
   <p class="sub">Heads-up (you on the SB) — your win% / odds at showdown if the opponent is on the top X% of hands</p>
 
   <div class="ctl">
-    Opponent plays top <span class="thr" id="thrVal">100%</span> of hands
-    <input type="range" id="thr" min="1" max="100" step="1" value="100" />
+    Opponent plays top <span class="seg" id="oppSeg"></span> of hands
   </div>
   <div class="opp-range" id="oppRange"></div>
 
   <div class="grid" id="grid"></div>
 
   <div class="legend">
-    <div class="bar-labels" style="margin-bottom:4px"><span>your equity — grayscale, scaled to this view's min&ndash;max</span></div>
+    <div class="bar-labels" style="margin-bottom:4px"><span>your equity — color, scaled to this view's min&ndash;max</span></div>
     <div class="bar" id="bar"></div>
     <div class="bar-labels" id="barLabels"></div>
   </div>
@@ -61,7 +79,8 @@
     const { hands, w, M } = window.EQ;
     const IX = Object.fromEntries(hands.map((h, i) => [h, i]));
     const COMBOS = (h) => (h.length === 2 ? 6 : h.endsWith("s") ? 4 : 12);
-    let oppPct = 1.0;                               // opponent range width (fraction)
+    const OPP_OPTIONS = [10, 15, 20, 25, 30];       // selectable opponent range widths (%)
+    let oppPct = 0.15;                              // opponent range width (fraction)
 
     // opponent hand strength = equity vs a random hand; used to rank their range
     const oppStr = hands.map((_, i) => {
@@ -90,7 +109,21 @@
       const f = (x) => x.toFixed(1);
       return p < 0.5 ? `${f((1 - p) / p)}:1` : `1:${f(p / (1 - p))}`;
     }
-    function gray(t) { const g = Math.round(245 - t * (245 - 140)); return `rgb(${g},${g},${g})`; }
+    // color heatmap: blue (low equity) -> teal -> yellow (high equity)
+    const STOPS = [[0.00, [44, 105, 176]], [0.50, [120, 198, 178]], [1.00, [250, 221, 80]]];
+    function heatRGB(t) {
+      t = Math.max(0, Math.min(1, t));
+      for (let k = 1; k < STOPS.length; k++) {
+        if (t <= STOPS[k][0]) {
+          const [t0, a] = STOPS[k - 1], [t1, b] = STOPS[k];
+          const f = (t - t0) / (t1 - t0);
+          return a.map((v, i) => Math.round(v + f * (b[i] - v)));
+        }
+      }
+      return STOPS.at(-1)[1];
+    }
+    const rgbStr = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
+    const lum = (c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
 
     // compact range notation for the opponent's range
     function runs(asc) { const r = []; for (let i = 0; i < asc.length;) { let j = i; while (j + 1 < asc.length && asc[j + 1] === asc[j] + 1) j++; r.push([asc[i], asc[j]]); i = j + 1; } return r; }
@@ -107,6 +140,7 @@
 
     function render() {
       const set = oppRangeSet(oppPct);
+      const labelSet = new Set([...set].map((j) => hands[j]));   // hands in opponent's range
 
       // hero equities for all 169 hands, find min/max for the color scale
       const eq = {};
@@ -120,32 +154,40 @@
         for (let c = 0; c < 13; c++) {
           const label = r === c ? R[r] + R[r] : (r < c ? R[r] + R[c] + "s" : R[c] + R[r] + "o");
           const e = eq[label];
-          const fg = norm(e) > 0.62 ? "#fff" : "#111";
-          html += `<div class="cell" style="background:${gray(norm(e))};color:${fg}" title="${label} vs top ${Math.round(oppPct * 100)}%: ${(e * 100).toFixed(1)}% (${oddsStr(e)})">
+          const rgb = heatRGB(norm(e));
+          const fg = lum(rgb) < 145 ? "#fff" : "#111";
+          const inOpp = labelSet.has(label) ? " in" : "";   // hand is in opponent's range
+          html += `<div class="cell${inOpp}" style="background:${rgbStr(rgb)};color:${fg}" title="${label} vs top ${Math.round(oppPct * 100)}%: ${(e * 100).toFixed(1)}% (${oddsStr(e)})">
             <span class="lab">${label}</span><span class="pct">${(e * 100).toFixed(0)}%</span><span class="odds">${oddsStr(e)}</span></div>`;
         }
       }
       document.getElementById("grid").innerHTML = html;
 
       // opponent range readout
-      const labelSet = new Set([...set].map((j) => hands[j]));
       let combos = 0; set.forEach((j) => combos += w[j]);
       document.getElementById("oppRange").innerHTML =
         `Opponent's range (top ${Math.round(oppPct * 100)}%, ${combos} combos): <code>${compress(labelSet)}</code>`;
 
       // legend
       const bar = document.getElementById("bar");
-      bar.style.background = `linear-gradient(90deg, ${gray(0)}, ${gray(1)})`;
+      const stopsCss = STOPS.map(([t, c]) => `rgb(${c.join(",")}) ${(t * 100).toFixed(0)}%`).join(",");
+      bar.style.background = `linear-gradient(90deg, ${stopsCss})`;
       const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => lo + t * (hi - lo));
       document.getElementById("barLabels").innerHTML = ticks.map((v) => `<span>${(v * 100).toFixed(0)}%</span>`).join("");
     }
 
-    document.getElementById("thr").addEventListener("input", (e) => {
-      oppPct = +e.target.value / 100;
-      document.getElementById("thrVal").textContent = e.target.value + "%";
-      render();
+    function renderOppSel() {
+      document.getElementById("oppSeg").innerHTML = OPP_OPTIONS.map(
+        (p) => `<button data-p="${p}" class="${Math.round(oppPct * 100) === p ? "active" : ""}">${p}%</button>`
+      ).join("");
+    }
+    document.getElementById("oppSeg").addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      oppPct = +b.dataset.p / 100;
+      renderOppSel(); render();
     });
 
+    renderOppSel();
     render();
   </script>
 </body>

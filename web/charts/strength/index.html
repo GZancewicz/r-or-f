@@ -18,6 +18,14 @@
     h1 { margin: 0 0 2px; font-size: 20px; letter-spacing: .5px; }
     .sub { margin: 0 0 14px; color: var(--muted); font-size: 13px; text-align: center; }
 
+    .chartnav { display: flex; gap: 8px; margin-bottom: 14px; }
+    .chartnav a {
+      text-decoration: none; font-size: 13px; font-weight: 700; color: #444;
+      background: #f2f2f2; border: 1px solid #ccc; border-radius: 20px; padding: 7px 16px;
+    }
+    .chartnav a.active { background: #333; color: #fff; border-color: #333; }
+    .chartnav a:hover { border-color: #888; }
+
     .seatsel { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; justify-content: center; }
     .seatsel button {
       background: var(--seat); color: var(--ink);
@@ -77,6 +85,10 @@
   </style>
 </head>
 <body>
+  <nav class="chartnav">
+    <a href="index.html" class="active">Hand strength</a>
+    <a href="vs-range.html">Equity vs range</a>
+  </nav>
   <h1>Strength Chart</h1>
   <p class="sub">P(your hand is best at showdown) — 6-handed, assuming everyone ahead of you folded</p>
 
@@ -84,7 +96,7 @@
   <div class="grid" id="grid"></div>
 
   <div class="legend">
-    <div class="bar-labels" style="margin-bottom:4px"><span>P(strongest) — grayscale, scaled to this seat's min–max</span></div>
+    <div class="bar-labels" style="margin-bottom:4px"><span>P(strongest) — color, scaled to this seat's min–max</span></div>
     <div class="bar" id="bar"></div>
     <div class="bar-labels" id="barLabels"></div>
   </div>
@@ -103,7 +115,7 @@
     const R = "AKQJT98765432".split("");
     const SEATS = window.STRENGTH.meta.seats;     // [{name,opponents}, ...]
     const BY = window.STRENGTH.bySeat;
-    let current = SEATS[0].name;                  // default UTG
+    let current = "SB";                           // default seat
     let topPct = 0.20;                            // select the strongest X% of hands (by combos)
     const RR = "AKQJT98765432";
     const comboCount = (h) => (h.length === 2 ? 6 : h.endsWith("s") ? 4 : 12);
@@ -127,20 +139,22 @@
       return p < 0.5 ? `${fmt((1 - p) / p)}:1` : `1:${fmt(p / (1 - p))}`;
     }
 
-    // grayscale: light (weak) -> medium (strong); kept light enough for black text
-    const STOPS = [[0.00, [245, 245, 245]], [1.00, [140, 140, 140]]];
-    function heat(t) {
+    // color heatmap: blue (weak) -> teal -> yellow (strong)
+    const STOPS = [[0.00, [44, 105, 176]], [0.50, [120, 198, 178]], [1.00, [250, 221, 80]]];
+    function heatRGB(t) {
       t = Math.max(0, Math.min(1, t));
       for (let k = 1; k < STOPS.length; k++) {
         if (t <= STOPS[k][0]) {
           const [t0, a] = STOPS[k - 1], [t1, b] = STOPS[k];
           const f = (t - t0) / (t1 - t0);
-          const c = a.map((v, i) => Math.round(v + f * (b[i] - v)));
-          return `rgb(${c[0]},${c[1]},${c[2]})`;
+          return a.map((v, i) => Math.round(v + f * (b[i] - v)));
         }
       }
-      return `rgb(${STOPS.at(-1)[1].join(",")})`;
+      return STOPS.at(-1)[1];
     }
+    const rgbStr = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
+    const lum = (c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+    const mixWhite = (c, f) => c.map((v) => Math.round(v + (255 - v) * f));
 
     // the 169 cells for one seat — identical markup used on screen and in print
     function cellsHTML(P, lo, hi, sel) {
@@ -152,9 +166,11 @@
           const p = P[label];
           const inSet = sel.set.has(label);
           const fav = !inSet && p > 0.5;
-          const fg = inSet ? "#000" : (fav ? "#6e6e6e" : "#999");
+          let rgb = heatRGB(norm(p));
+          if (!inSet) rgb = mixWhite(rgb, 0.5);        // fade non-playable hands
+          const fg = lum(rgb) < 145 ? "#fff" : "#111"; // readable text on the cell color
           const cls = inSet ? " in" : (fav ? " fav" : "");
-          html += `<div class="cell${cls}" style="background:${heat(norm(p))};color:${fg}" title="${label}: ${(p * 100).toFixed(1)}%  (${oddsStr(p)})">
+          html += `<div class="cell${cls}" style="background:${rgbStr(rgb)};color:${fg}" title="${label}: ${(p * 100).toFixed(1)}%  (${oddsStr(p)})">
             <span class="lab">${label}</span><span class="pct">${(p * 100).toFixed(0)}%</span><span class="odds">${oddsStr(p)}</span></div>`;
         }
       }
