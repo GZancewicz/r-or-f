@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Strength Chart — 6-handed</title>
   <style>
-    :root { --bg: #0f1419; --ink: #e8eef2; --muted: #8aa0ad; --gold: #d4af37; --border: #2c3a48; --seat: #1b2530; }
+    :root { --bg: #ffffff; --ink: #1a1a1a; --muted: #555; --border: #bbb; --seat: #f2f2f2; }
     * { box-sizing: border-box; }
     body {
       margin: 0; min-height: 100vh;
-      background: radial-gradient(circle at 50% 0%, #18222e, var(--bg));
+      background: #fff;
       color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       display: flex; flex-direction: column; align-items: center;
@@ -26,8 +26,8 @@
       display: flex; flex-direction: column; align-items: center; line-height: 1.15;
     }
     .seatsel button .opp { font-size: 10px; color: var(--muted); font-weight: 600; }
-    .seatsel button.active { background: var(--gold); color: #1a1205; border-color: var(--gold); }
-    .seatsel button.active .opp { color: #5a4a12; }
+    .seatsel button.active { background: #333; color: #fff; border-color: #333; }
+    .seatsel button.active .opp { color: #ccc; }
 
     .grid {
       display: grid; grid-template-columns: repeat(13, minmax(0, 1fr));
@@ -36,44 +36,43 @@
     .cell {
       aspect-ratio: 1 / 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center; border-radius: 4px;
-      line-height: 1.05; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6);
+      line-height: 1.05; color: #111;
     }
     .cell .lab { font-weight: 800; font-size: clamp(8px, 1.5vw, 12px); }
     .cell .pct { font-weight: 600; font-size: clamp(7px, 1.25vw, 10px); opacity: .92; }
-    .cell .odds { font-weight: 600; font-size: clamp(6px, 1vw, 9px); opacity: .72; }
+    .cell .odds { font-weight: 600; font-size: clamp(6px, 1vw, 9px); opacity: .75; }
+    .cell.in  { box-shadow: inset 0 0 0 2px #000; }   /* selected hands: black outline */
+    .cell.fav { box-shadow: inset 0 0 0 2px #595959; }/* >50% but filtered out: dark-gray outline */
 
     .legend { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
     .bar { width: min(80vw, 360px); height: 14px; border-radius: 7px; border: 1px solid var(--border); }
     .bar-labels { width: min(80vw, 360px); display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 
-    .cell.in { box-shadow: inset 0 0 0 2px #fff; }
-
     .rules { margin-top: 22px; width: min(96vw, 700px); }
     .rules .ctl { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
-    .rules input[type=range] { width: min(60vw, 320px); accent-color: var(--gold); }
-    .rules .thr { color: var(--gold); font-weight: 800; font-size: 15px; min-width: 46px; text-align: right; }
+    .rules input[type=range] { width: min(60vw, 320px); accent-color: #555; }
+    .rules .thr { color: #000; font-weight: 800; font-size: 15px; min-width: 46px; text-align: right; }
     .rules .out {
-      margin-top: 12px; background: #0f1820; border: 1px solid var(--border);
+      margin-top: 12px; background: #f7f7f7; border: 1px solid var(--border);
       border-radius: 10px; padding: 12px 14px; text-align: center;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px;
-      color: var(--ink); word-break: break-word; line-height: 1.6;
+      color: #111; word-break: break-word; line-height: 1.6;
     }
     .rules .meta2 { margin-top: 6px; font-size: 12px; color: var(--muted); text-align: center; }
 
-    /* ---- printer-friendly: white paper, black ink, no heavy fills ---- */
+    /* ---- print / all-seats layout (one chart per page) ---- */
+    body.printing { padding: 0; }
+    .page { width: 7.3in; margin: 0 auto; padding: 16px 0 18px; }
+    .page .grid { width: 100%; }
+    .page-title { text-align: center; font-size: 19px; font-weight: 800; line-height: 1.3; margin-bottom: 10px; }
+    .page-title span { display: block; font-weight: 500; font-size: 12.5px; color: #555; }
+    .page-range { margin-top: 12px; font-size: 12px; color: #222; }
+    .page-range code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     @media print {
-      body { background: #fff !important; color: #000; padding: 6px; }
-      h1, .sub, .meta2, .bar-labels, .thr { color: #000 !important; }
-      .cell {
-        background: #fff !important; color: #000 !important;
-        text-shadow: none !important; border: 1px solid #999;
-      }
-      .cell .pct, .cell .odds { opacity: 1; }
-      .cell.in { box-shadow: inset 0 0 0 2px #000 !important; }   /* selected hands: bold outline */
-      .seatsel button { background: #fff !important; color: #000 !important; border: 1px solid #000; }
-      .seatsel button.active { box-shadow: inset 0 0 0 2px #000; font-weight: 900; }
-      .bar, input[type=range] { display: none; }                 /* color gradient + slider: useless on paper */
-      .rules .out { background: #fff !important; color: #000 !important; border: 1px solid #000; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .page { page-break-after: always; }
+      .page:last-child { page-break-after: auto; }
+      @page { size: letter; margin: 0.4in; }
     }
   </style>
 </head>
@@ -85,15 +84,15 @@
   <div class="grid" id="grid"></div>
 
   <div class="legend">
-    <div class="bar-labels" style="margin-bottom:4px"><span>P(strongest) — linear color, 0–100% (common scale)</span></div>
+    <div class="bar-labels" style="margin-bottom:4px"><span>P(strongest) — grayscale, scaled to this seat's min–max</span></div>
     <div class="bar" id="bar"></div>
     <div class="bar-labels" id="barLabels"></div>
   </div>
 
   <div class="rules">
     <div class="ctl">
-      Hands down to <span class="thr" id="thrVal">2:1</span> to be best
-      <input type="range" id="thr" min="0.5" max="12" step="0.5" value="2" />
+      Top <span class="thr" id="thrVal">20%</span> of hands by win%
+      <input type="range" id="thr" min="0" max="100" step="1" value="20" />
     </div>
     <div class="out" id="rulesOut">—</div>
     <div class="meta2" id="rulesMeta"></div>
@@ -105,19 +104,18 @@
     const SEATS = window.STRENGTH.meta.seats;     // [{name,opponents}, ...]
     const BY = window.STRENGTH.bySeat;
     let current = SEATS[0].name;                  // default UTG
-    let oddsThresh = 2;                           // include hands at least this good (X:1 to be best)
+    let topPct = 0.20;                            // select the strongest X% of hands (by combos)
     const RR = "AKQJT98765432";
     const comboCount = (h) => (h.length === 2 ? 6 : h.endsWith("s") ? 4 : 12);
 
-    // every hand whose displayed (rounded) odds to be best are X:1 or better
-    function selectByOdds(P, x) {
-      const set = new Set(); let combos = 0, cutoff = null, cutP = 2;
-      for (const h of Object.keys(P)) {
-        const oddsAgainst = Math.round((1 - P[h]) / P[h]);   // same value shown on the cell
-        if (oddsAgainst <= x) {
-          set.add(h); combos += comboCount(h);
-          if (P[h] < cutP) { cutP = P[h]; cutoff = h; }
-        }
+    // strongest hands (by win%) making up the top `pct` of all 1326 combos
+    function selectTop(P, pct) {
+      const target = pct * 1326;
+      const hands = Object.keys(P).sort((a, b) => P[b] - P[a]);
+      const set = new Set(); let combos = 0, cutoff = null;
+      for (const h of hands) {
+        if (combos >= target) break;
+        set.add(h); combos += comboCount(h); cutoff = h;
       }
       return { set, combos, cutoff };
     }
@@ -125,15 +123,12 @@
     // probability -> gambler's odds. underdog "X:1" (against), favorite "1:X" (for)
     function oddsStr(p) {
       if (p <= 0 || p >= 1) return "";
-      const fmt = (x) => Math.round(x).toString();
+      const fmt = (x) => x.toFixed(1);
       return p < 0.5 ? `${fmt((1 - p) / p)}:1` : `1:${fmt(p / (1 - p))}`;
     }
 
-    // blue -> light teal (bright mid) -> yellow
-    const STOPS = [
-      [0.00, [25, 50, 110]], [0.25, [45, 120, 185]],
-      [0.50, [120, 200, 190]], [0.75, [190, 215, 110]], [1.00, [250, 225, 55]],
-    ];
+    // grayscale: light (weak) -> medium (strong); kept light enough for black text
+    const STOPS = [[0.00, [245, 245, 245]], [1.00, [140, 140, 140]]];
     function heat(t) {
       t = Math.max(0, Math.min(1, t));
       for (let k = 1; k < STOPS.length; k++) {
@@ -147,6 +142,25 @@
       return `rgb(${STOPS.at(-1)[1].join(",")})`;
     }
 
+    // the 169 cells for one seat — identical markup used on screen and in print
+    function cellsHTML(P, lo, hi, sel) {
+      const norm = (p) => (p - lo) / (hi - lo);
+      let html = "";
+      for (let r = 0; r < 13; r++) {
+        for (let c = 0; c < 13; c++) {
+          const label = r === c ? R[r] + R[r] : (r < c ? R[r] + R[c] + "s" : R[c] + R[r] + "o");
+          const p = P[label];
+          const inSet = sel.set.has(label);
+          const fav = !inSet && p > 0.5;
+          const fg = inSet ? "#000" : (fav ? "#6e6e6e" : "#999");
+          const cls = inSet ? " in" : (fav ? " fav" : "");
+          html += `<div class="cell${cls}" style="background:${heat(norm(p))};color:${fg}" title="${label}: ${(p * 100).toFixed(1)}%  (${oddsStr(p)})">
+            <span class="lab">${label}</span><span class="pct">${(p * 100).toFixed(0)}%</span><span class="odds">${oddsStr(p)}</span></div>`;
+        }
+      }
+      return html;
+    }
+
     function renderSeats() {
       document.getElementById("seatSel").innerHTML = SEATS.map((s) =>
         `<button data-seat="${s.name}" class="${s.name === current ? "active" : ""}">
@@ -156,28 +170,15 @@
 
     function render() {
       const P = BY[current];
-      const norm = (p) => p;                                   // linear, fixed 0-100% (common to all seats)
-      const sel = selectByOdds(P, oddsThresh);
-
-      let html = "";
-      for (let r = 0; r < 13; r++) {
-        for (let c = 0; c < 13; c++) {
-          let label;
-          if (r === c) label = R[r] + R[c];
-          else if (r < c) label = R[r] + R[c] + "s";
-          else label = R[c] + R[r] + "o";
-          const p = P[label];
-          const inSet = sel.set.has(label) ? " in" : "";
-          html += `<div class="cell${inSet}" style="background:${heat(norm(p))}" title="${label}: ${(p * 100).toFixed(1)}%  (${oddsStr(p)})">
-            <span class="lab">${label}</span><span class="pct">${(p * 100).toFixed(0)}%</span><span class="odds">${oddsStr(p)}</span></div>`;
-        }
-      }
-      document.getElementById("grid").innerHTML = html;
+      const vals = Object.values(P);
+      const lo = Math.min(...vals), hi = Math.max(...vals);    // scale to this seat's min/max
+      const sel = selectTop(P, topPct);
+      document.getElementById("grid").innerHTML = cellsHTML(P, lo, hi, sel);
 
       // legend: gradient (log axis) + % ticks at evenly-spaced log positions
       const stopsCss = STOPS.map(([t, c]) => `rgb(${c.join(",")}) ${(t * 100).toFixed(0)}%`).join(",");
       document.getElementById("bar").style.background = `linear-gradient(90deg, ${stopsCss})`;
-      const ticks = [0, 0.25, 0.5, 0.75, 1];      // fixed 0-100% scale, common to every seat
+      const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => lo + t * (hi - lo));  // this seat's range
       document.getElementById("barLabels").innerHTML =
         ticks.map((v) => `<span>${(v * 100).toFixed(0)}%</span>`).join("");
 
@@ -224,20 +225,51 @@
         `${set.size} classes · ${combos} combos · ${(combos / 1326 * 100).toFixed(1)}% of hands · down to ${cut}`;
     }
 
-    document.getElementById("seatSel").addEventListener("click", (e) => {
-      const b = e.target.closest("button"); if (!b) return;
-      current = b.dataset.seat;
-      renderSeats(); render();
-    });
+    // ---- print mode: ?print=1&top=NN  -> all seats, one per page, identical styling ----
+    function renderPrint() {
+      const tp = Math.round(topPct * 100);
+      let html = "";
+      for (const s of SEATS) {
+        const P = BY[s.name];
+        const vals = Object.values(P);
+        const lo = Math.min(...vals), hi = Math.max(...vals);
+        const sel = selectTop(P, topPct);
+        const pctOf = (sel.combos / 1326 * 100).toFixed(1);
+        const rng = sel.set.size ? compress(sel.set) : "(none)";
+        html += `<section class="page">
+          <div class="page-title">Strength Chart: ${s.name}
+            <span>P(best at showdown) · 6-handed, folded to you · vs ${s.opponents} · top ${tp}% outlined</span></div>
+          <div class="grid">${cellsHTML(P, lo, hi, sel)}</div>
+          <div class="page-range"><b>Top ${tp}% range</b> (${sel.set.size} classes, ${sel.combos} combos, ${pctOf}% of hands):<br>
+            <code>${rng}</code></div>
+        </section>`;
+      }
+      document.body.innerHTML = html;
+      document.body.classList.add("printing");
+    }
 
-    document.getElementById("thr").addEventListener("input", (e) => {
-      oddsThresh = +e.target.value;
-      document.getElementById("thrVal").textContent = e.target.value + ":1";
+    const params = new URLSearchParams(location.search);
+    if (params.get("top")) topPct = (+params.get("top")) / 100;
+    if (params.get("seat")) current = params.get("seat");
+
+    if (params.has("print")) {
+      renderPrint();
+    } else {
+      document.getElementById("seatSel").addEventListener("click", (e) => {
+        const b = e.target.closest("button"); if (!b) return;
+        current = b.dataset.seat;
+        renderSeats(); render();
+      });
+      document.getElementById("thr").addEventListener("input", (e) => {
+        topPct = +e.target.value / 100;
+        document.getElementById("thrVal").textContent = e.target.value + "%";
+        render();
+      });
+      document.getElementById("thr").value = Math.round(topPct * 100);
+      document.getElementById("thrVal").textContent = Math.round(topPct * 100) + "%";
+      renderSeats();
       render();
-    });
-
-    renderSeats();
-    render();
+    }
   </script>
 </body>
 </html>

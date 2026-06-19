@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equity vs Opponent Range — heads-up</title>
+  <style>
+    :root { --ink: #1a1a1a; --muted: #555; --border: #bbb; --seat: #f2f2f2; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: #fff; color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; padding: 20px 12px 40px;
+    }
+    h1 { margin: 0 0 2px; font-size: 20px; letter-spacing: .5px; }
+    .sub { margin: 0 0 16px; color: var(--muted); font-size: 13px; text-align: center; }
+
+    .ctl { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; font-size: 14px; margin-bottom: 6px; }
+    .ctl .thr { color: #000; font-weight: 800; font-size: 16px; min-width: 48px; text-align: right; }
+    .ctl input[type=range] { width: min(62vw, 340px); accent-color: #444; }
+    .opp-range { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 16px;
+                 max-width: min(96vw, 700px); }
+    .opp-range code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #333; }
+
+    .grid { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 2px; width: min(96vw, 700px); }
+    .cell {
+      aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border-radius: 4px; line-height: 1.05; color: #111;
+    }
+    .cell .lab { font-weight: 800; font-size: clamp(8px, 1.5vw, 12px); }
+    .cell .pct { font-weight: 700; font-size: clamp(7px, 1.3vw, 11px); margin-top: 1px; }
+    .cell .odds { font-weight: 600; font-size: clamp(6px, 1vw, 9px); opacity: .8; }
+
+    .legend { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .bar { width: min(80vw, 360px); height: 14px; border-radius: 7px; border: 1px solid var(--border); }
+    .bar-labels { width: min(80vw, 360px); display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <h1>Equity vs Opponent's Range</h1>
+  <p class="sub">Heads-up (you on the SB) — your win% / odds at showdown if the opponent is on the top X% of hands</p>
+
+  <div class="ctl">
+    Opponent plays top <span class="thr" id="thrVal">100%</span> of hands
+    <input type="range" id="thr" min="1" max="100" step="1" value="100" />
+  </div>
+  <div class="opp-range" id="oppRange"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="legend">
+    <div class="bar-labels" style="margin-bottom:4px"><span>your equity — grayscale, scaled to this view's min&ndash;max</span></div>
+    <div class="bar" id="bar"></div>
+    <div class="bar-labels" id="barLabels"></div>
+  </div>
+
+  <script src="equity.js"></script>
+  <script>
+    const R = "AKQJT98765432".split("");
+    const RR = "AKQJT98765432";
+    const { hands, w, M } = window.EQ;
+    const IX = Object.fromEntries(hands.map((h, i) => [h, i]));
+    const COMBOS = (h) => (h.length === 2 ? 6 : h.endsWith("s") ? 4 : 12);
+    let oppPct = 1.0;                               // opponent range width (fraction)
+
+    // opponent hand strength = equity vs a random hand; used to rank their range
+    const oppStr = hands.map((_, i) => {
+      let n = 0, d = 0;
+      for (let j = 0; j < 169; j++) { n += w[j] * M[i][j]; d += w[j]; }
+      return n / d;
+    });
+    const oppOrder = [...hands.keys()].sort((a, b) => oppStr[b] - oppStr[a]);
+
+    function oppRangeSet(pct) {                      // top pct of opponent hands, by combos
+      const target = pct * 1326;
+      const set = new Set(); let combos = 0;
+      for (const j of oppOrder) {
+        if (combos >= target) break;
+        set.add(j); combos += w[j];
+      }
+      return set;
+    }
+    function equityVs(hero, set) {                   // hero's equity vs the range
+      let n = 0, d = 0;
+      for (const j of set) { n += w[j] * M[hero][j]; d += w[j]; }
+      return d > 0 ? n / d : 0;
+    }
+    function oddsStr(p) {
+      if (p <= 0 || p >= 1) return "";
+      const f = (x) => x.toFixed(1);
+      return p < 0.5 ? `${f((1 - p) / p)}:1` : `1:${f(p / (1 - p))}`;
+    }
+    function gray(t) { const g = Math.round(245 - t * (245 - 140)); return `rgb(${g},${g},${g})`; }
+
+    // compact range notation for the opponent's range
+    function runs(asc) { const r = []; for (let i = 0; i < asc.length;) { let j = i; while (j + 1 < asc.length && asc[j + 1] === asc[j] + 1) j++; r.push([asc[i], asc[j]]); i = j + 1; } return r; }
+    function compress(labelSet) {
+      const out = [], s = labelSet;
+      const pr = []; for (let i = 0; i < 13; i++) if (s.has(RR[i] + RR[i])) pr.push(i);
+      for (const [a, b] of runs(pr)) out.push(a === 0 ? `${RR[b]}${RR[b]}+` : (a === b ? `${RR[a]}${RR[a]}` : `${RR[b]}${RR[b]}-${RR[a]}${RR[a]}`));
+      for (const suit of ["s", "o"]) for (let h = 0; h < 13; h++) {
+        const ks = []; for (let k = h + 1; k < 13; k++) if (s.has(RR[h] + RR[k] + suit)) ks.push(k);
+        for (const [a, b] of runs(ks)) out.push(a === h + 1 ? `${RR[h]}${RR[b]}${suit}+` : (a === b ? `${RR[h]}${RR[a]}${suit}` : `${RR[h]}${RR[b]}${suit}-${RR[h]}${RR[a]}${suit}`));
+      }
+      return out.join(", ");
+    }
+
+    function render() {
+      const set = oppRangeSet(oppPct);
+
+      // hero equities for all 169 hands, find min/max for the color scale
+      const eq = {};
+      for (const h of hands) eq[h] = equityVs(IX[h], set);
+      const vals = Object.values(eq);
+      const lo = Math.min(...vals), hi = Math.max(...vals);
+      const norm = (p) => (hi > lo ? (p - lo) / (hi - lo) : 0.5);
+
+      let html = "";
+      for (let r = 0; r < 13; r++) {
+        for (let c = 0; c < 13; c++) {
+          const label = r === c ? R[r] + R[r] : (r < c ? R[r] + R[c] + "s" : R[c] + R[r] + "o");
+          const e = eq[label];
+          const fg = norm(e) > 0.62 ? "#fff" : "#111";
+          html += `<div class="cell" style="background:${gray(norm(e))};color:${fg}" title="${label} vs top ${Math.round(oppPct * 100)}%: ${(e * 100).toFixed(1)}% (${oddsStr(e)})">
+            <span class="lab">${label}</span><span class="pct">${(e * 100).toFixed(0)}%</span><span class="odds">${oddsStr(e)}</span></div>`;
+        }
+      }
+      document.getElementById("grid").innerHTML = html;
+
+      // opponent range readout
+      const labelSet = new Set([...set].map((j) => hands[j]));
+      let combos = 0; set.forEach((j) => combos += w[j]);
+      document.getElementById("oppRange").innerHTML =
+        `Opponent's range (top ${Math.round(oppPct * 100)}%, ${combos} combos): <code>${compress(labelSet)}</code>`;
+
+      // legend
+      const bar = document.getElementById("bar");
+      bar.style.background = `linear-gradient(90deg, ${gray(0)}, ${gray(1)})`;
+      const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => lo + t * (hi - lo));
+      document.getElementById("barLabels").innerHTML = ticks.map((v) => `<span>${(v * 100).toFixed(0)}%</span>`).join("");
+    }
+
+    document.getElementById("thr").addEventListener("input", (e) => {
+      oppPct = +e.target.value / 100;
+      document.getElementById("thrVal").textContent = e.target.value + "%";
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
