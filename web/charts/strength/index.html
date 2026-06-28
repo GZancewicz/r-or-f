@@ -49,8 +49,8 @@
     .cell .lab { font-weight: 800; font-size: clamp(8px, 1.5vw, 12px); }
     .cell .pct { font-weight: 600; font-size: clamp(7px, 1.25vw, 10px); opacity: .92; }
     .cell .odds { font-weight: 600; font-size: clamp(6px, 1vw, 9px); opacity: .75; }
-    .cell.in  { box-shadow: inset 0 0 0 2px #000; }   /* selected hands: black outline */
-    .cell.fav { box-shadow: inset 0 0 0 2px #595959; }/* >50% but filtered out: dark-gray outline */
+    .cell.fav { background: #fff !important; color: #000 !important; box-shadow: inset 0 0 0 1px #bbb; } /* you're a favorite (>1:1): white w/ black letters */
+    .cell.in  { box-shadow: inset 0 0 0 2px #000; }   /* selected hands (top X%): black outline */
 
     .legend { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
     .bar { width: min(80vw, 360px); height: 14px; border-radius: 7px; border: 1px solid var(--border); }
@@ -60,6 +60,13 @@
     .rules .ctl { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
     .rules input[type=range] { width: min(60vw, 320px); accent-color: #555; }
     .rules .thr { color: #000; font-weight: 800; font-size: 15px; min-width: 46px; text-align: right; }
+    .rules .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+    .rules .presets button {
+      font: inherit; font-weight: 700; font-size: 13px; color: #444; cursor: pointer;
+      background: #f2f2f2; border: 1px solid #ccc; border-radius: 8px; padding: 5px 11px;
+    }
+    .rules .presets button:hover { border-color: #888; }
+    .rules .presets button.active { background: #333; color: #fff; border-color: #333; }
     .rules .out {
       margin-top: 12px; background: #f7f7f7; border: 1px solid var(--border);
       border-radius: 10px; padding: 12px 14px; text-align: center;
@@ -105,6 +112,7 @@
     <div class="ctl">
       Top <span class="thr" id="thrVal">20%</span> of hands by win%
       <input type="range" id="thr" min="0" max="100" step="1" value="20" />
+      <span class="presets" id="presets"></span>
     </div>
     <div class="out" id="rulesOut">—</div>
     <div class="meta2" id="rulesMeta"></div>
@@ -165,11 +173,11 @@
           const label = r === c ? R[r] + R[r] : (r < c ? R[r] + R[c] + "s" : R[c] + R[r] + "o");
           const p = P[label];
           const inSet = sel.set.has(label);
-          const fav = !inSet && p > 0.5;
+          const fav = p > 0.5;                          // favorite (>1:1) -> white w/ black letters
           let rgb = heatRGB(norm(p));
           if (!inSet) rgb = mixWhite(rgb, 0.5);        // fade non-playable hands
           const fg = lum(rgb) < 145 ? "#fff" : "#111"; // readable text on the cell color
-          const cls = inSet ? " in" : (fav ? " fav" : "");
+          const cls = (inSet ? " in" : "") + (fav ? " fav" : "");
           html += `<div class="cell${cls}" style="background:${rgbStr(rgb)};color:${fg}" title="${label}: ${(p * 100).toFixed(1)}%  (${oddsStr(p)})">
             <span class="lab">${label}</span><span class="pct">${(p * 100).toFixed(0)}%</span><span class="odds">${oddsStr(p)}</span></div>`;
         }
@@ -276,13 +284,25 @@
         current = b.dataset.seat;
         renderSeats(); render();
       });
-      document.getElementById("thr").addEventListener("input", (e) => {
-        topPct = +e.target.value / 100;
-        document.getElementById("thrVal").textContent = e.target.value + "%";
+      const thr = document.getElementById("thr");
+      const PRESETS = [5, 10, 15, 20, 25, 30];
+      document.getElementById("presets").innerHTML =
+        PRESETS.map((p) => `<button data-pct="${p}">${p}%</button>`).join("");
+      function setTopPct(v) {                          // v: 0..100, keeps slider + label + presets in sync
+        v = Math.max(0, Math.min(100, Math.round(+v || 0)));
+        topPct = v / 100;
+        thr.value = v;
+        document.getElementById("thrVal").textContent = v + "%";
+        document.querySelectorAll("#presets button").forEach((b) =>
+          b.classList.toggle("active", +b.dataset.pct === v));
         render();
+      }
+      thr.addEventListener("input", (e) => setTopPct(e.target.value));
+      document.getElementById("presets").addEventListener("click", (e) => {
+        const b = e.target.closest("button"); if (!b) return;
+        setTopPct(b.dataset.pct);
       });
-      document.getElementById("thr").value = Math.round(topPct * 100);
-      document.getElementById("thrVal").textContent = Math.round(topPct * 100) + "%";
+      setTopPct(Math.round(topPct * 100));
       renderSeats();
       render();
     }

@@ -44,7 +44,8 @@
     .cell .lab { font-weight: 800; font-size: clamp(8px, 1.5vw, 12px); }
     .cell .pct { font-weight: 700; font-size: clamp(7px, 1.3vw, 11px); margin-top: 1px; }
     .cell .odds { font-weight: 600; font-size: clamp(6px, 1vw, 9px); opacity: .8; }
-    .cell.in { box-shadow: inset 0 0 0 2px #000; }   /* hand is in the opponent's range */
+    .cell.fav { background: #fff !important; color: #000 !important; box-shadow: inset 0 0 0 1px #bbb; } /* you're a favorite (>1:1) */
+    .cell.in { box-shadow: inset 0 0 0 2px #000; }   /* hand is in the opponent's range (top X%) */
 
     .legend { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
     .bar { width: min(80vw, 360px); height: 14px; border-radius: 7px; border: 1px solid var(--border); }
@@ -157,7 +158,8 @@
           const rgb = heatRGB(norm(e));
           const fg = lum(rgb) < 145 ? "#fff" : "#111";
           const inOpp = labelSet.has(label) ? " in" : "";   // hand is in opponent's range
-          html += `<div class="cell${inOpp}" style="background:${rgbStr(rgb)};color:${fg}" title="${label} vs top ${Math.round(oppPct * 100)}%: ${(e * 100).toFixed(1)}% (${oddsStr(e)})">
+          const fav = e > 0.5 ? " fav" : "";                // you're a favorite (>1:1) -> white w/ black letters
+          html += `<div class="cell${inOpp}${fav}" style="background:${rgbStr(rgb)};color:${fg}" title="${label} vs top ${Math.round(oppPct * 100)}%: ${(e * 100).toFixed(1)}% (${oddsStr(e)})">
             <span class="lab">${label}</span><span class="pct">${(e * 100).toFixed(0)}%</span><span class="odds">${oddsStr(e)}</span></div>`;
         }
       }
