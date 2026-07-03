@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All-in or Fold — should I shove?</title>
+  <style>
+    :root { --ink: #1a1a1a; --muted: #555; --border: #bbb; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: #fff; color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; padding: 20px 12px 40px;
+    }
+    h1 { margin: 0 0 2px; font-size: 20px; letter-spacing: .5px; }
+    .sub { margin: 0 0 16px; color: var(--muted); font-size: 13px; text-align: center; }
+    .sub a { color: #333; }
+
+    .chartnav { display: flex; gap: 8px; margin-bottom: 14px; }
+    .chartnav a {
+      text-decoration: none; font-size: 13px; font-weight: 700; color: #444;
+      background: #f2f2f2; border: 1px solid #ccc; border-radius: 20px; padding: 7px 16px;
+    }
+    .chartnav a.active { background: #333; color: #fff; border-color: #333; }
+    .chartnav a:hover { border-color: #888; }
+
+    .panel { width: min(96vw, 980px); }
+    .main { display: flex; gap: 18px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+    .results { width: min(96vw, 620px); margin: 0 auto; }
+
+    /* ---- live range card: hands >50% to win, given the current table ---- */
+    .rangecard { width: min(96vw, 480px); }
+    .rcap { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); margin: 2px 0 6px; }
+    .rgrid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 1px; }
+    .rcell {
+      aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
+      font-size: clamp(7px, 2.2vw, 11.5px); font-weight: 700; border-radius: 2px;
+    }
+    .rcell.hi { background: #fff; color: #000; box-shadow: inset 0 0 0 1px #aaa; }
+    .rcell.lo { background: #c4c4c4; color: #7a7a7a; }
+    .rcell:hover { box-shadow: inset 0 0 0 2px #333; }
+
+    /* ---- trapezoidal table: short side at top, taller than wide ---- */
+    .feltwrap { position: relative; width: min(92vw, 420px); height: 560px; margin: 4px auto 6px; }
+    .trap-rim, .trap-felt { clip-path: polygon(24% 0, 76% 0, 100% 100%, 0 100%); }
+    .trap-rim  { position: absolute; inset: 0; background: #4a3526; filter: drop-shadow(0 3px 8px rgba(0,0,0,.3)); }
+    .trap-felt {
+      position: absolute; inset: 10px;
+      background: radial-gradient(ellipse at 50% 60%, #35845a 0%, #2a6b49 70%, #235a3d 100%);
+      box-shadow: inset 0 0 40px rgba(0,0,0,.35);
+    }
+    .feltwrap .center {
+      position: absolute; left: 50%; top: 44%; transform: translate(-50%,-50%);
+      color: rgba(255,255,255,.55); font-size: 12px; font-weight: 700; text-align: center;
+      letter-spacing: 1px; pointer-events: none;
+    }
+    .hint { text-align: center; font-size: 12px; color: var(--muted); margin: 0 0 16px; }
+
+    .seatcard {
+      position: absolute; width: 158px; padding: 8px 9px 9px;
+      background: #fff; border: 2px solid #999; border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3); cursor: pointer; text-align: center;
+    }
+    .seatcard:hover { border-color: #333; }
+    .seatcard.me { border-color: #3a6bd6; box-shadow: 0 0 0 3px rgba(58,107,214,.3), 0 2px 6px rgba(0,0,0,.3); }
+    .seatcard.folded { opacity: .72; }
+    .seatcard.empty {
+      background: rgba(255,255,255,.12); border: 2px dashed rgba(255,255,255,.75);
+      color: #fff; box-shadow: none;
+    }
+    .seatcard.empty:hover { border-color: #fff; background: rgba(255,255,255,.2); }
+    .seatcard .emptylab { font-size: 11px; color: rgba(255,255,255,.85); line-height: 1.5; padding: 6px 0; }
+    .seatcard .sname { font-weight: 800; font-size: 15px; margin-bottom: 5px; }
+    .seatcard .sname .badge {
+      background: #3a6bd6; color: #fff; font-size: 10px; padding: 2px 7px;
+      border-radius: 9px; vertical-align: 2px; margin-left: 4px; letter-spacing: .5px;
+    }
+    .seatcard .close {
+      position: absolute; top: 3px; right: 5px; border: 0; background: none; cursor: pointer;
+      font-size: 13px; font-weight: 800; color: #999; padding: 2px 4px; line-height: 1;
+    }
+    .seatcard .close:hover { color: #c0392b; }
+    .dbtn {
+      position: absolute; top: -12px; left: -12px; width: 27px; height: 27px;
+      background: #f5cf46; border: 2px solid #b8952a; border-radius: 50%;
+      font-size: 13px; font-weight: 800; color: #5c4708;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,.4);
+    }
+    .rotbtn {
+      position: absolute; left: 6px; bottom: 6px; z-index: 2;
+      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      font: inherit; font-size: 17px; font-weight: 800; color: #333;
+      background: #fff; border: 2px solid #999; border-radius: 22px; padding: 6px 13px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    .rotbtn:hover { border-color: #333; }
+    .rotbtn .mini-d { position: static; width: 21px; height: 21px; font-size: 11px; }
+    .seatcard .mini { display: flex; gap: 4px; justify-content: center; margin-bottom: 6px; }
+    .seatcard .mini button {
+      font: inherit; font-size: 11.5px; font-weight: 700; color: #333; cursor: pointer;
+      background: #f2f2f2; border: 1px solid #ccc; border-radius: 6px; padding: 4px 9px;
+    }
+    .seatcard .mini button.active { background: #333; color: #fff; border-color: #333; }
+    .seatcard .stats { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; }
+    .seatcard .statlab { font-size: 11.5px; color: #333; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+    .seatcard input[type=number] {
+      font: inherit; font-size: 13px; font-weight: 700; color: #000; width: 54px;
+      text-align: right; padding: 3px 5px; border: 1px solid var(--border); border-radius: 6px;
+    }
+    .seatcard .acts { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    /* physical seats: you at the bottom, others left / top / right */
+    .slot-top    { left: 50%; top: 16px;    transform: translateX(-50%); }
+    .slot-right  { right: 0;  top: 42%;     transform: translateY(-50%); }
+    .slot-bottom { left: 50%; bottom: 16px; transform: translateX(-50%); }
+    .slot-left   { left: 0;   top: 42%;     transform: translateY(-50%); }
+
+
+    @media (max-width: 480px) {
+      .feltwrap { height: 600px; }
+      .seatcard { width: 140px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="chartnav">
+    <a href="index.html">Hand strength</a>
+    <a href="vs-range.html">Equity vs range</a>
+    <a href="all-in.html" class="active">All-in or fold</a>
+  </nav>
+  <h1>All-in or Fold</h1>
+  <p class="sub">$2 buy-in · SB $0.10 · BB $0.25 · stacks trued up to $2 (8 bb) · up to 4 players ·
+    <a href="all-in-or-fold.md">rules</a></p>
+
+  <div class="panel">
+    <div class="main">
+      <div class="rangecard">
+        <div class="rcap" id="rcap">white = &gt;50% to win when called</div>
+        <div class="rgrid" id="rgrid"></div>
+      </div>
+      <div class="feltwrap" id="felt">
+        <div class="trap-rim"></div>
+        <div class="trap-felt"></div>
+        <div class="center">SB $0.10 · BB $0.25</div>
+        <button class="rotbtn" id="rotBtn" title="move the dealer button to the next occupied seat clockwise">
+          <span class="dbtn mini-d">D</span>↻</button>
+      </div>
+    </div>
+    <p class="hint">you always sit at the bottom · tap a seat to move the dealer button
+      <span class="dbtn" style="position:static; display:inline-flex; width:19px; height:19px; font-size:10px; vertical-align:-4px;">D</span> there ·
+      ✕ empties a seat, tap an empty seat to fill it ·
+      <a href="all-in-or-fold.md">model details</a></p>
+  </div>
+
+  <script src="equity.js"></script>
+  <script>
+    const R = "AKQJT98765432".split("");
+    const { hands, w, M } = window.EQ;
+    const IX = Object.fromEntries(hands.map((h, i) => [h, i]));
+
+    // rank the 169 hands by equity vs a random hand (same ordering as the equity page)
+    const oppStr = hands.map((_, i) => {
+      let n = 0, d = 0;
+      for (let j = 0; j < 169; j++) { n += w[j] * M[i][j]; d += w[j]; }
+      return n / d;
+    });
+    const order = [...hands.keys()].sort((a, b) => oppStr[b] - oppStr[a]);
+
+    const rangeCache = new Map();
+    function rangeSet(pct) {                       // top pct% of hands, by combos
+      if (rangeCache.has(pct)) return rangeCache.get(pct);
+      const target = (pct / 100) * 1326;
+      const set = new Set(); let combos = 0;
+      for (const j of order) {
+        if (combos >= target) break;
+        set.add(j); combos += w[j];
+      }
+      rangeCache.set(pct, set);
+      return set;
+    }
+    function equityVs(hero, set) {                 // hero's heads-up equity vs a range
+      let n = 0, d = 0;
+      for (const j of set) { n += w[j] * M[hero][j]; d += w[j]; }
+      return d > 0 ? n / d : 1;
+    }
+
+    // ---- state ----
+    const PHYS = ["bottom", "left", "top", "right"];   // physical seats, clockwise; you sit at bottom
+    const ME = "bottom";
+    const SLOT = { bottom: "slot-bottom", left: "slot-left", top: "slot-top", right: "slot-right" };
+    const filled = { bottom: true, left: true, top: true, right: true };
+    let btnSeat = "bottom";                            // where the dealer button is
+    // per-player stats (they belong to the person, not the position)
+    const opp = {};
+    for (const s of PHYS) opp[s] = { action: "allin", ats: 45, fta: 45 };
+
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, +v || 0));
+
+    // filled seats clockwise starting from the button
+    function liveFromBtn() {
+      const k = PHYS.indexOf(btnSeat);
+      const out = [];
+      for (let i = 0; i < 4; i++) {
+        const s = PHYS[(k + i) % 4];
+        if (filled[s]) out.push(s);
+      }
+      return out;
+    }
+    // seat -> position name, given the button (heads-up: button is the SB)
+    const POS_NAMES = { 2: ["SB", "BB"], 3: ["BTN", "SB", "BB"], 4: ["BTN", "SB", "BB", "UTG"] };
+    function positions() {
+      const live = liveFromBtn();
+      const names = POS_NAMES[live.length];
+      const pos = {};
+      live.forEach((s, i) => pos[s] = names[i]);
+      return pos;
+    }
+    // preflop action order: first to act is the seat after the BB, clockwise
+    function actionOrder() {
+      const live = liveFromBtn();
+      const pos = positions();
+      const k = live.findIndex((s) => pos[s] === "BB") + 1;
+      return [...live.slice(k), ...live.slice(0, k)];
+    }
+    function nextFilledClockwise(from) {
+      const k = PHYS.indexOf(from);
+      for (let i = 1; i <= 4; i++) {
+        const s = PHYS[(k + i) % 4];
+        if (filled[s]) return s;
+      }
+      return ME;
+    }
+
+    // ---- render ----
+    function renderFelt() {
+      const pos = positions();
+      const ord = actionOrder();
+      const myIdx = ord.indexOf(ME);
+      const felt = document.getElementById("felt");
+      felt.querySelectorAll(".seatcard").forEach((el) => el.remove());
+      for (const s of PHYS) {
+        const el = document.createElement("div");
+        el.dataset.seat = s;
+        let cls = `seatcard ${SLOT[s]}`;
+        let inner;
+        if (!filled[s]) {
+          cls += " empty";
+          inner = `<div class="emptylab">empty seat<br>tap to add player</div>`;
+        } else {
+          const d = s === btnSeat ? `<span class="dbtn" title="dealer button">D</span>` : "";
+          const x = s === ME ? "" : `<button class="close" title="empty this seat">✕</button>`;
+          const o = opp[s];
+          const i = ord.indexOf(s);
+          const stats = `<div class="stats">
+              <label class="statlab">ATS % <input type="number" min="1" max="100" value="${o.ats}" data-seat="${s}" data-k="ats"></label>
+              <label class="statlab">FTA % <input type="number" min="0" max="100" value="${o.fta}" data-seat="${s}" data-k="fta"></label>
+            </div>`;
+          if (s === ME) {
+            cls += " me";
+            inner = `${d}<div class="sname">${pos[s]}<span class="badge">YOU</span></div>`;
+          } else if (i < myIdx) {
+            const shoved = o.action === "allin";
+            if (!shoved) cls += " folded";
+            inner = `${d}${x}<div class="sname">${pos[s]}</div>
+              <div class="mini">
+                <button data-act="fold" data-seat="${s}" class="${shoved ? "" : "active"}">Folded</button>
+                <button data-act="allin" data-seat="${s}" class="${shoved ? "active" : ""}">All-in</button>
+              </div>${stats}`;
+          } else {
+            inner = `${d}${x}<div class="sname">${pos[s]}</div>
+              <div class="acts">acts after you</div>${stats}`;
+          }
+        }
+        el.className = cls;
+        el.innerHTML = inner;
+        felt.appendChild(el);
+      }
+    }
+
+    // ---- compute + render result ----
+    // scenario list for the current table state (independent of your hand — no card removal)
+    function buildScenarios() {
+      const pos = positions();
+      const ord = actionOrder();
+      const myIdx = ord.indexOf(ME);
+
+      // players ahead who shoved: the first shove is a steal (ATS range); a shove
+      // over an earlier all-in is a call/reshove (100−FTA range)
+      const shovers = [];
+      let anyShove = false;
+      for (const s of ord.slice(0, myIdx)) {
+        if (opp[s].action !== "allin") continue;
+        shovers.push(anyShove
+          ? { name: pos[s], pct: Math.max(1, 100 - clamp(opp[s].fta, 0, 100)), via: "100−FTA" }
+          : { name: pos[s], pct: clamp(opp[s].ats, 1, 100), via: "ATS" });
+        anyShove = true;
+      }
+      const behinds = ord.slice(myIdx + 1)
+        .map((s) => ({ name: pos[s], foldP: clamp(opp[s].fta, 0, 100) / 100,
+                       pct: Math.max(1, 100 - clamp(opp[s].fta, 0, 100)), via: "100−FTA" }));
+
+      // every fold/call combination of the players behind you
+      let scen = [{ p: 1, inPot: shovers }];
+      for (const b of behinds) {
+        const next = [];
+        for (const s of scen) {
+          if (b.foldP > 0) next.push({ p: s.p * b.foldP, inPot: s.inPot });
+          if (b.foldP < 1) next.push({ p: s.p * (1 - b.foldP), inPot: [...s.inPot, b] });
+        }
+        scen = next;
+      }
+      return { scen, pos };
+    }
+    // P(win at showdown | you get called) — the everyone-folds scenario is excluded,
+    // otherwise fold equity makes every hand ">50%" and the chart is useless
+    function winWhenCalled(hero, scen) {
+      let num = 0, den = 0;
+      for (const s of scen) {
+        if (!s.inPot.length) continue;               // uncontested: not a showdown
+        let win = 1;
+        for (const o of s.inPot) win *= equityVs(hero, rangeSet(o.pct));
+        num += s.p * win;
+        den += s.p;
+      }
+      return den > 0 ? num / den : null;             // null: nobody can ever call
+    }
+
+    // the live range card: every hand >50% to win when called is white, the rest gray
+    function renderGrid(scen) {
+      let html = "", nHi = 0, empty = false;
+      for (let r = 0; r < 13; r++) {
+        for (let c = 0; c < 13; c++) {
+          const label = r === c ? R[r] + R[r] : (r < c ? R[r] + R[c] + "s" : R[c] + R[r] + "o");
+          const win = winWhenCalled(IX[label], scen);
+          if (win === null) { empty = true; break; }
+          const hi = win > 0.5;
+          if (hi) nHi++;
+          html += `<div class="rcell ${hi ? "hi" : "lo"}" title="${label}: ${(win * 100).toFixed(1)}% when called">${label}</div>`;
+        }
+        if (empty) break;
+      }
+      document.getElementById("rgrid").innerHTML = empty ? "" : html;
+      document.getElementById("rcap").textContent = empty
+        ? "no opponents can call — any hand takes it down"
+        : `white = >50% to win when called (${nHi} of 169)`;
+    }
+
+    function compute() {
+      const { scen } = buildScenarios();
+      renderGrid(scen);
+    }
+
+    // ---- events ----
+    // moving the button = a new hand: everyone's action resets to All-in (stats persist)
+    function resetActions() {
+      for (const s of PHYS) opp[s].action = "allin";
+    }
+    document.getElementById("rotBtn").addEventListener("click", () => {
+      btnSeat = nextFilledClockwise(btnSeat);
+      resetActions();
+      renderFelt(); compute();
+    });
+    const felt = document.getElementById("felt");
+    felt.addEventListener("click", (e) => {
+      const card = e.target.closest(".seatcard");
+      if (!card) return;
+      const s = card.dataset.seat;
+      if (e.target.closest(".close")) {                       // empty this seat
+        filled[s] = false;
+        if (btnSeat === s) btnSeat = nextFilledClockwise(s);
+        renderFelt(); compute(); return;
+      }
+      const b = e.target.closest("button");
+      if (b) { opp[s].action = b.dataset.act; renderFelt(); compute(); return; }
+      if (!filled[s]) {                                       // fill an empty seat
+        filled[s] = true;
+        renderFelt(); compute(); return;
+      }
+      if (e.target.closest("input, label")) return;           // typing, not moving the button
+      if (s !== btnSeat) {                                    // move the dealer button here = new hand
+        btnSeat = s;
+        resetActions();
+        renderFelt(); compute();
+      }
+    });
+    felt.addEventListener("input", (e) => {
+      const t = e.target;
+      if (t.matches("input[type=number]")) {   // no re-render: keep focus in the box
+        opp[t.dataset.seat][t.dataset.k] = clamp(t.value, 0, 100);
+        compute();
+      }
+    });
+
+    renderFelt(); compute();
+  </script>
+</body>
+</html>
